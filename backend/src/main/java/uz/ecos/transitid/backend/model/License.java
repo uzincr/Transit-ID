@@ -3,37 +3,42 @@ package uz.ecos.transitid.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "licenses")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class License {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private String phone;
+    @ManyToOne
+    @JoinColumn(name = "driver_id", nullable = false)
+    private DriverProfile driver;
 
-    private String fullName;
+    @Column(nullable = false, unique = true)
+    private String licenseNumber;
+
+    @Column(nullable = false)
+    private LocalDate issueDate;
+
+    @Column(nullable = false)
+    private LocalDate expiryDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private LicenseStatus status;
 
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 }

@@ -1,0 +1,72 @@
+# ══════════════════════════════════════════════════════════════
+# TRANSITID — Full Stack Docker Compose (Loyiha-4)
+# Services: PostgreSQL · Spring Boot Backend · React/Vite Frontend
+# Ports: DB=5434, Backend=8004, Frontend=3004
+# ══════════════════════════════════════════════════════════════
+
+services:
+  transitid-db:
+    image: postgres:15-alpine
+    container_name: transitid-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: transitid
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - transitid-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d transitid"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  transitid-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: transitid-backend
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://transitid-db:5432/transitid
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgrespassword
+      - JWT_SECRET=super-secret-transitid-key-make-it-long-enough-for-hs256
+      - JWT_EXPIRATION=86400000
+    ports:
+      - "8004:8080"
+    depends_on:
+      transitid-db:
+        condition: service_healthy
+    networks:
+      - transitid-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  transitid-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: transitid-frontend
+    ports:
+      - "3004:80"
+    depends_on:
+      - transitid-backend
+    networks:
+      - transitid-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  transitid-network:
+    driver: bridge

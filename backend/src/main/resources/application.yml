@@ -21,3 +21,9 @@ server:
 jwt:
   secret: super-secret-transitid-key-make-it-long-enough-for-hs256
   expiration: 86400000 # 1 day
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
